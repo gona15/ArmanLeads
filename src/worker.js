@@ -22,6 +22,16 @@ export default {
 
     if (match) {
       const id = decodeURIComponent(match[1]);
+      // Optional ?s=stage (initial/fu1/fu2/fu3) identifies which specific
+      // email this link was in, not just which lead. Encoded into the same
+      // lead_id text column as "id:stage" rather than a new column, since
+      // this worker only has anon INSERT access - no schema/DDL access to
+      // add a real column. Links with no ?s= (all history before this
+      // change, and anything hand-typed without it) still log as a plain
+      // id, same as always - normalizeClicks() on the CRM side treats that
+      // as "clicked, stage unknown" rather than dropping it.
+      const stage = url.searchParams.get("s");
+      const loggedId = stage ? `${id}:${stage}` : id;
       ctx.waitUntil(
         fetch(`${SUPABASE_URL}/rest/v1/link_clicks`, {
           method: "POST",
@@ -30,7 +40,7 @@ export default {
             Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ lead_id: id }),
+          body: JSON.stringify({ lead_id: loggedId }),
         }).catch(() => {})
       );
       return Response.redirect("https://armanleads.com/", 302);
