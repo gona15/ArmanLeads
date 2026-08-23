@@ -1,27 +1,65 @@
-// Per-lead click tracker for cold-email links, plus normal static file serving.
+// Per-lead click tracker for cold-email links, market page rendering, plus
+// normal static file serving.
 //
 // A lead's email contains a link like armanleads.com/r/l4fe0puo instead of
 // a plain armanleads.com link. This logs the click (which lead, when) and
-// redirects to the real homepage in the same response — the visitor never
-// sees anything but a normal link. Everything else falls through to the
-// static site exactly as before.
+// redirects to the market page for that lead's city in the same response —
+// the visitor never sees anything but a normal link. Everything else falls
+// through to the static site exactly as before.
 //
 // Uses the public anon key on purpose, not the service role key: this file
 // ships in a public repo and runs on a public route, so it only ever needs
 // permission to INSERT into link_clicks — nothing more. The Supabase RLS
 // policy on that table grants exactly that and nothing else, so even a
 // fully leaked copy of this file can't read, edit, or delete anything.
+//
+// The city lookup below reads CRM state server-side only, and only ever
+// yields a redirect target. If a privileged key is ever bound to this
+// worker (env.SUPABASE_READ_KEY), the lookup uses it instead of the anon
+// key; nothing about the key ever reaches the browser either way.
+import { marketBySlug, pathForCity, renderMarket } from "./markets.js";
+
 const SUPABASE_URL = "https://tlxbfaloqcprtquryqsp.supabase.co";
 const SUPABASE_ANON_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRseGJmYWxvcWNwcnRxdXJ5cXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2Njg2OTMsImV4cCI6MjA5OTI0NDY5M30.Pe4omG7U1bsDIWyxWsP_yGvym0Z0ptBSSK3t91nD8uU";
+const STATE_ROW_ID = "main";
+
+// Lead ids are short generated slugs (e.g. "l4fe0puo"). Anything else is a
+// typo or a probe, and never reaches Supabase.
+const LEAD_ID = /^[A-Za-z0-9_-]{1,64}$/;
+
+/**
+ * Looks up which market page a lead belongs on. Runs entirely server-side;
+ * the lead row itself is never returned to the caller.
+ * @returns {Promise<string>} A path — "/" if the lead or city is unknown.
+ */
+async function marketPathForLead(id, env) {
+  const key = env.SUPABASE_READ_KEY || SUPABASE_ANON_KEY;
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/armanleads_state?id=eq.${STATE_ROW_ID}&select=data`,
+      { headers: { apikey: key, Authorization: `Bearer ${key}` } }
+    );
+    if (!res.ok) return "/";
+    const rows = await res.json();
+    const leads = rows?.[0]?.data?.leads;
+    if (!Array.isArray(leads)) return "/";
+    const lead = leads.find((l) => l && l.id === id);
+    return lead ? pathForCity(lead.city) : "/";
+  } catch {
+    return "/";
+  }
+}
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    const match = url.pathname.match(/^\/r\/([^/]+)\/?$/);
+    const redirect = (path) => Response.redirect(new URL(path, url.origin).toString(), 302);
 
+    const match = url.pathname.match(/^\/r\/([^/]+)\/?$/);
     if (match) {
       const id = decodeURIComponent(match[1]);
+      if (!LEAD_ID.test(id)) return redirect("/");
       // Optional ?s=stage (initial/fu1/fu2/fu3) identifies which specific
       // email this link was in, not just which lead. Encoded into the same
       // lead_id text column as "id:stage" rather than a new column, since
@@ -43,7 +81,26 @@ export default {
           body: JSON.stringify({ lead_id: loggedId }),
         }).catch(() => {})
       );
-      return Response.redirect("https://armanleads.com/", 302);
+      // Emails already sent point at /r/{id} with no city in the URL, so
+      // the city has to be resolved here for old links to land on the right
+      // page without anything being re-sent.
+      return redirect(await marketPathForLead(id, env));
+    }
+
+    const marketMatch = url.pathname.match(/^\/markets\/([^/]+)\/?$/);
+    if (marketMatch) {
+      const market = marketBySlug(decodeURIComponent(marketMatch[1]));
+      if (!market) return redirect("/");
+      const page = await env.ASSETS.fetch(new URL("/index.html", url.origin));
+      if (!page.ok) return page;
+      const html = renderMarket(await page.text(), market, url.origin);
+      return new Response(html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Cache-Control": "public, max-age=0, must-revalidate",
+        },
+      });
     }
 
     return env.ASSETS.fetch(request);
