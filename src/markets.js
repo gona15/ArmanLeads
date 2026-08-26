@@ -62,7 +62,7 @@ export const MARKETS = [
         "A few reasons. New patients are worth a lot over the life of the relationship, the demand is tied to one geography so ad clicks actually turn into local patients, and independent practices are getting out-spent on Google by the DSO chains pushing into Iowa. It's a niche where one person on one practice can still win. Des Moines itself is mid-sized, has a strong independent dental scene, draws fewer big-spend agencies than Austin or Miami, and the dentists here talk to each other. Do good work for one practice and the next few find me.",
       "faq-areas":
         "Des Moines, Iowa, including West Des Moines, Ankeny, Urbandale, and Johnston. Selected ZIPs are open right now. One practice per ZIP, so each area is exclusive. I also work in <a href=\"/markets/cedar-rapids-ia\">Cedar Rapids, Iowa</a> and <a href=\"/markets/lincoln-ne\">Lincoln, Nebraska</a>.",
-      "footer-geo": "<a href=\"privacy.html\">Privacy</a> · One practice per ZIP · Des Moines, Iowa",
+      "footer-geo": "<a href=\"/privacy.html\">Privacy</a> · One practice per ZIP · Des Moines, Iowa",
     },
   },
   {
@@ -93,7 +93,7 @@ export const MARKETS = [
         "A few reasons. New patients are worth a lot over the life of the relationship, the demand is tied to one geography so ad clicks actually turn into local patients, and independent practices are getting out-spent on Google by the DSO chains pushing into Iowa. It's a niche where one person on one practice can still win. Cedar Rapids is the second Iowa market I added, picked through the same research process as the first: mid-sized, independent-heavy, and not crowded with big-spend agencies.",
       "faq-areas":
         "Cedar Rapids, Iowa, including Marion, Hiawatha, and Robins. Selected ZIPs are open right now. One practice per ZIP, so each area is exclusive. I also work in <a href=\"/markets/des-moines-ia\">Des Moines, Iowa</a> and <a href=\"/markets/lincoln-ne\">Lincoln, Nebraska</a>.",
-      "footer-geo": "<a href=\"privacy.html\">Privacy</a> · One practice per ZIP · Cedar Rapids, Iowa",
+      "footer-geo": "<a href=\"/privacy.html\">Privacy</a> · One practice per ZIP · Cedar Rapids, Iowa",
     },
   },
   {
@@ -124,7 +124,7 @@ export const MARKETS = [
         "A few reasons. New patients are worth a lot over the life of the relationship, the demand is tied to one geography so ad clicks actually turn into local patients, and independent practices are getting out-spent on Google by the DSO chains pushing into the Midwest. It's a niche where one person on one practice can still win. Lincoln is the first Nebraska market I opened, chosen through the same focused research process as the two Iowa markets before it: mid-sized, independent-heavy, and not crowded with big-spend agencies.",
       "faq-areas":
         "Lincoln, Nebraska, including Waverly, Hickman, and Walton. Selected ZIPs are open right now. One practice per ZIP, so each area is exclusive. I also work in <a href=\"/markets/des-moines-ia\">Des Moines, Iowa</a> and <a href=\"/markets/cedar-rapids-ia\">Cedar Rapids, Iowa</a>.",
-      "footer-geo": "<a href=\"privacy.html\">Privacy</a> · One practice per ZIP · Lincoln, Nebraska",
+      "footer-geo": "<a href=\"/privacy.html\">Privacy</a> · One practice per ZIP · Lincoln, Nebraska",
     },
   },
 ];
@@ -262,6 +262,20 @@ function replaceOne(html, re, value) {
   return html.replace(re, (m, a, b) => a + value + b);
 }
 
+// index.html sits at the root and links its assets page-relatively
+// (arman-portrait.jpg, favicon.svg, privacy.html). A market page is served one
+// directory deep, where those same URLs would resolve to /markets/... and 404
+// — which is why the portrait and the Tuesday photo went missing. Rewriting
+// them to root-absolute fixes it without touching the markup on disk. A <base>
+// tag would be the other option and is the wrong one: it also re-points every
+// in-page #anchor at the homepage, so the nav and CTAs would jump off the page.
+const RELATIVE_URL = /\s(src|href)="(?!https?:|\/\/|\/|#|mailto:|tel:|data:)([^"]+)"/g;
+
+/** @param {string} html */
+function rootRelativeAssets(html) {
+  return html.replace(RELATIVE_URL, ' $1="/$2"');
+}
+
 /**
  * Renders a market page from the homepage HTML. Same document, same styles,
  * same DOM — only marked copy and head metadata differ.
@@ -278,6 +292,7 @@ export function renderMarket(html, m, origin) {
   const { business, faq } = structuredData(m, origin);
   out = fillSlot(out, "ld-business", `\n${jsonForScript(business)}\n`);
   out = fillSlot(out, "ld-faq", `\n${jsonForScript(faq)}\n`);
+  out = rootRelativeAssets(out);
 
   out = replaceOne(out, /(<title>)[\s\S]*?(<\/title>)/, m.title);
   out = replaceOne(out, /(<meta name="description" content=")[^"]*(">)/, m.description);
