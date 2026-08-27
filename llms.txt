@@ -1,11 +1,11 @@
 # ArmanLeads
 
-> ArmanLeads runs Meta (Facebook and Instagram) ad campaigns that bring new patients to one independent dental practice at a time, in Des Moines, Iowa and the wider Midwest. The first 30 days are free (you pay only your own Meta ad spend); after that it is $697 per month, month-to-month, only if it is working.
+> ArmanLeads runs Meta (Facebook and Instagram) ad campaigns that bring new patients to independent dental practices, one practice per ZIP, in select Midwest markets: Des Moines and Cedar Rapids, Iowa, and Lincoln, Nebraska. The first 30 days are free (you pay only your own Meta ad spend); after that it is $697 per month, month-to-month, only if it is working.
 
 ## What it is
 - Service: paid social advertising (Meta / Facebook / Instagram) for independent dental practices
 - Outcome: new patients booked into chairs, not impressions or clicks
-- Model: one practice per ZIP code, so each client's area is exclusive
+- Model: one practice per ZIP, with a deliberately limited client roster, so each client's area is exclusive
 - Operator: Arman, a solo paid-ads specialist based in Slemani, Kurdistan, working US Central hours
 - Contact: arman@armanleads.com
 
@@ -16,8 +16,9 @@
 - The founder rate is locked for early clients even when prices rise for new practices later.
 
 ## Areas served
-- Primary: Des Moines, Iowa, and the metro (West Des Moines, Ankeny, Urbandale, Johnston).
-- Also available across Iowa and the wider Midwest, one practice per ZIP code.
+- Current focus markets: Des Moines, Iowa; Cedar Rapids, Iowa; and Lincoln, Nebraska.
+- Des Moines metro includes West Des Moines, Ankeny, Urbandale, and Johnston.
+- Practices elsewhere in the Midwest can ask about availability. One practice per ZIP.
 
 ## Who it is for
 - Independent or solo dental practices that want more new patients without managing ads themselves.
@@ -30,4 +31,7 @@
 
 ## Key pages
 - Home: https://armanleads.com/ (the offer, how the 30 days work, pricing, FAQ)
+- Des Moines, IA: https://armanleads.com/markets/des-moines-ia
+- Cedar Rapids, IA: https://armanleads.com/markets/cedar-rapids-ia
+- Lincoln, NE: https://armanleads.com/markets/lincoln-ne
 - Privacy: https://armanleads.com/privacy.html

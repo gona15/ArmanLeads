@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "armanleads",
+  "compatibility_date": "2026-07-23",
+  "observability": {
+    "enabled": true
+  },
+  "main": "src/worker.js",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
